@@ -1,0 +1,437 @@
+{
+  "description": "Shared test vector for the canonical form. tools/stamp.py (the reference) and the C# stamper must give these exact strings and hashes.",
+  "canonical": [
+    {
+      "name": "empty object",
+      "value": {},
+      "expected": "{}",
+      "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    {
+      "name": "keys are sorted, arrays keep their order",
+      "value": {
+        "b": 1,
+        "a": {
+          "d": [
+            3,
+            2,
+            1
+          ],
+          "c": true
+        },
+        "B": null,
+        "": 0
+      },
+      "expected": "{\"\":0,\"B\":null,\"a\":{\"c\":true,\"d\":[3,2,1]},\"b\":1}",
+      "sha256": "e1dbb0eca04d0c09ce45c1189c654f63aa3e23d9554979f86b000ab01caebb06"
+    },
+    {
+      "name": "escapes: quote, backslash, controls",
+      "value": "q\" b\\ s/ t\t n\n r\r bs\b ff\f nul\u0000 us\u001f del\u007f end",
+      "expected": "\"q\\\" b\\\\ s/ t\\t n\\n r\\r bs\\b ff\\f nul\\u0000 us\\u001f del\u007f end\"",
+      "sha256": "cd0e78caac480d470b424757b668ce96ab31410fd585bd67dc2d08a547eb69a6"
+    },
+    {
+      "name": "non-ASCII left as it is",
+      "value": "caf\u00e9 \u00b7 \u65e5\u672c\u8a9e \u2028 \u2029 \ud83d\ude00 \ufeff",
+      "expected": "\"caf\u00e9 \u00b7 \u65e5\u672c\u8a9e \u2028 \u2029 \ud83d\ude00 \ufeff\"",
+      "sha256": "23f16da1c9d0e054dfdbe51ee1dae89add857157a8bee9f635bec259bb61a464"
+    },
+    {
+      "name": "markup characters are not escaped",
+      "value": "<script>alert('x')</script> & + = >",
+      "expected": "\"<script>alert('x')</script> & + = >\"",
+      "sha256": "7d1e435b7b8399d3ff659db04d01ac1dd8c90b27cbda2cc444857fbb5829a561"
+    },
+    {
+      "name": "keys sort by code point, not by UTF-16 unit",
+      "value": {
+        "\uff5a": 1,
+        "\ud83d\ude00": 2,
+        "z": 3,
+        "\u00e9": 4,
+        "Z": 5
+      },
+      "expected": "{\"Z\":5,\"z\":3,\"\u00e9\":4,\"\uff5a\":1,\"\ud83d\ude00\":2}",
+      "sha256": "6a884159e7db07127ac428430c70a9a5debf8148c1afe41769d3b7bf2503bf93"
+    },
+    {
+      "name": "integers",
+      "value": [
+        0,
+        -1,
+        1,
+        9223372036854775807,
+        -9223372036854775808
+      ],
+      "expected": "[0,-1,1,9223372036854775807,-9223372036854775808]",
+      "sha256": "46a2e0f9e79b98425237f31fe1340c21ff51e68b0f69f188049d202159d0f0c6"
+    },
+    {
+      "name": "empty containers",
+      "value": {
+        "a": [],
+        "b": {},
+        "c": [
+          [],
+          {}
+        ]
+      },
+      "expected": "{\"a\":[],\"b\":{},\"c\":[[],{}]}",
+      "sha256": "62872cef8308d8aeb4a9c2eaa2d567ba2b9a3b2e982c8d2b9d17c68366b52d00"
+    },
+    {
+      "name": "booleans and null",
+      "value": [
+        true,
+        false,
+        null
+      ],
+      "expected": "[true,false,null]",
+      "sha256": "4d0f18de2133118249c26acc481838d4f6bb6bc1de882d99abbd19ae9397e8df"
+    },
+    {
+      "name": "nested",
+      "value": {
+        "x": [
+          {
+            "b": 1,
+            "a": [
+              true,
+              {
+                "z": null,
+                "y": "v"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": "{\"x\":[{\"a\":[true,{\"y\":\"v\",\"z\":null}],\"b\":1}]}",
+      "sha256": "aef5debeaa0482fa52da4b5ad8e918fa91099107d04b66d32ec269f045449b55"
+    }
+  ],
+  "stamp": [
+    {
+      "name": "minimal",
+      "request": {
+        "format": "seatrials/1",
+        "name": "Minimal",
+        "repo": {
+          "remote": "https://example.com/acme/sample-repo.git"
+        },
+        "revisions": [
+          {
+            "label": "only",
+            "rev": "main"
+          }
+        ],
+        "steps": [
+          {
+            "name": "run",
+            "command": "echo hello"
+          }
+        ]
+      },
+      "baseline": "{\"format\":\"seatrials/1\",\"name\":\"Minimal\",\"repo\":{\"remote\":\"https://example.com/acme/sample-repo.git\"},\"revisions\":[{\"label\":\"only\",\"rev\":\"main\"}],\"steps\":[{\"command\":\"echo hello\",\"name\":\"run\"}]}",
+      "baselineSha256": "008a6e0464239b54ede3cf69e52542c90667290804c831bf053dff1850e9e217"
+    },
+    {
+      "name": "tasks form",
+      "request": {
+        "format": "seatrials/1",
+        "name": "Tasks request",
+        "repo": {
+          "remote": "https://example.com/acme/sample-repo.git"
+        },
+        "revisions": [
+          {
+            "label": "A",
+            "sha": "0000000000000000000000000000000000000001"
+          },
+          {
+            "label": "B",
+            "sha": "0000000000000000000000000000000000000002"
+          },
+          {
+            "label": "C",
+            "sha": "0000000000000000000000000000000000000003"
+          }
+        ],
+        "tasks": [
+          {
+            "name": "build only",
+            "revision": "A",
+            "steps": [
+              {
+                "name": "build",
+                "command": "make"
+              }
+            ]
+          },
+          {
+            "name": "full",
+            "revision": "B",
+            "steps": [
+              {
+                "name": "build",
+                "command": "make"
+              },
+              {
+                "name": "test",
+                "kind": "test",
+                "command": "make test"
+              }
+            ]
+          }
+        ]
+      },
+      "baseline": "{\"format\":\"seatrials/1\",\"name\":\"Tasks request\",\"repo\":{\"remote\":\"https://example.com/acme/sample-repo.git\"},\"revisions\":[{\"label\":\"A\",\"sha\":\"0000000000000000000000000000000000000001\"},{\"label\":\"B\",\"sha\":\"0000000000000000000000000000000000000002\"},{\"label\":\"C\",\"sha\":\"0000000000000000000000000000000000000003\"}],\"tasks\":[{\"name\":\"build only\",\"revision\":\"A\",\"steps\":[{\"command\":\"make\",\"name\":\"build\"}]},{\"name\":\"full\",\"revision\":\"B\",\"steps\":[{\"command\":\"make\",\"name\":\"build\"},{\"command\":\"make test\",\"kind\":\"test\",\"name\":\"test\"}]}]}",
+      "baselineSha256": "e2c2de07afdeae61cdf9bf250d462f03ca761177efb35c96335c8dc6596080b4"
+    },
+    {
+      "name": "every key",
+      "request": {
+        "format": "seatrials/1",
+        "name": "Complete request",
+        "purpose": "Exercise every key.",
+        "repo": {
+          "remote": "https://example.com/acme/sample-repo.git"
+        },
+        "bindings": {
+          "data": {
+            "description": "Folder of input data",
+            "kind": "folder"
+          },
+          "profile": {
+            "description": "Profile file",
+            "kind": "file"
+          },
+          "note": {
+            "kind": "text"
+          },
+          "bare": {}
+        },
+        "revisions": [
+          {
+            "label": "before",
+            "rev": "1a2b3c4^",
+            "sha": "0000000000000000000000000000000000000001"
+          },
+          {
+            "label": "after",
+            "rev": "1a2b3c4",
+            "sha": "0000000000000000000000000000000000000002"
+          },
+          {
+            "label": "pinned-later",
+            "rev": "alpha/topic"
+          },
+          {
+            "label": "by-id",
+            "sha": "0000000000000000000000000000000000000003"
+          }
+        ],
+        "steps": [
+          {
+            "name": "overlay",
+            "kind": "other",
+            "command": "git apply C:\\work\\change.patch",
+            "inputs": [
+              "C:\\work\\change.patch"
+            ]
+          },
+          {
+            "name": "build",
+            "kind": "build",
+            "command": "dotnet build -c Release",
+            "workdir": "src",
+            "shell": "pwsh",
+            "env": {
+              "CONFIG": "Release",
+              "API_TOKEN": {
+                "value": "not-a-real-value",
+                "secret": true
+              }
+            },
+            "timeoutMinutes": 10,
+            "onFailure": "continue",
+            "okExitCodes": [
+              0,
+              2
+            ]
+          },
+          {
+            "name": "measure",
+            "kind": "run",
+            "handsOff": true,
+            "command": "run.exe --out {artifactDir} --data {bind:data} --sha {sha}",
+            "artifacts": [
+              "{artifactDir}\\*.json",
+              {
+                "glob": "*.txt",
+                "optional": true,
+                "includeOlder": true
+              }
+            ],
+            "expect": [
+              {
+                "in": "artifact:*.txt",
+                "mustMatch": "Build: .*\\+{sha7}",
+                "message": "the report is not from this commit"
+              },
+              {
+                "in": "output",
+                "mustNotMatch": "Unhandled exception"
+              },
+              {
+                "in": "output",
+                "mustContain": "Done"
+              }
+            ]
+          }
+        ],
+        "matrix": {
+          "rounds": 2,
+          "order": "blocked",
+          "pauseBetweenSeconds": 60
+        },
+        "compare": [
+          {
+            "name": "the change",
+            "a": "before",
+            "b": "after"
+          }
+        ]
+      },
+      "baseline": "{\"bindings\":{\"bare\":{},\"data\":{\"description\":\"Folder of input data\",\"kind\":\"folder\"},\"note\":{\"kind\":\"text\"},\"profile\":{\"description\":\"Profile file\",\"kind\":\"file\"}},\"compare\":[{\"a\":\"before\",\"b\":\"after\",\"name\":\"the change\"}],\"format\":\"seatrials/1\",\"matrix\":{\"order\":\"blocked\",\"pauseBetweenSeconds\":60,\"rounds\":2},\"name\":\"Complete request\",\"purpose\":\"Exercise every key.\",\"repo\":{\"remote\":\"https://example.com/acme/sample-repo.git\"},\"revisions\":[{\"label\":\"before\",\"rev\":\"1a2b3c4^\",\"sha\":\"0000000000000000000000000000000000000001\"},{\"label\":\"after\",\"rev\":\"1a2b3c4\",\"sha\":\"0000000000000000000000000000000000000002\"},{\"label\":\"pinned-later\",\"rev\":\"alpha/topic\"},{\"label\":\"by-id\",\"sha\":\"0000000000000000000000000000000000000003\"}],\"steps\":[{\"command\":\"git apply C:\\\\work\\\\change.patch\",\"inputs\":[\"C:\\\\work\\\\change.patch\"],\"kind\":\"other\",\"name\":\"overlay\"},{\"command\":\"dotnet build -c Release\",\"env\":{\"API_TOKEN\":{\"secret\":true,\"value\":\"not-a-real-value\"},\"CONFIG\":\"Release\"},\"kind\":\"build\",\"name\":\"build\",\"okExitCodes\":[0,2],\"onFailure\":\"continue\",\"shell\":\"pwsh\",\"timeoutMinutes\":10,\"workdir\":\"src\"},{\"artifacts\":[\"{artifactDir}\\\\*.json\",{\"glob\":\"*.txt\",\"includeOlder\":true,\"optional\":true}],\"command\":\"run.exe --out {artifactDir} --data {bind:data} --sha {sha}\",\"expect\":[{\"in\":\"artifact:*.txt\",\"message\":\"the report is not from this commit\",\"mustMatch\":\"Build: .*\\\\+{sha7}\"},{\"in\":\"output\",\"mustNotMatch\":\"Unhandled exception\"},{\"in\":\"output\",\"mustContain\":\"Done\"}],\"handsOff\":true,\"kind\":\"run\",\"name\":\"measure\"}]}",
+      "baselineSha256": "cdfad39d27b3e27c03ff2adedcb82fa1bc0367d6e470332a7948679bd0136202"
+    },
+    {
+      "name": "sample",
+      "request": {
+        "format": "seatrials/1",
+        "name": "Report time, before and after a change",
+        "purpose": "Does commit 1a2b3c4 change how long the report takes on alpha/topic?",
+        "repo": {
+          "remote": "https://example.com/acme/sample-repo.git"
+        },
+        "bindings": {
+          "data": {
+            "description": "Folder of input data",
+            "kind": "folder"
+          }
+        },
+        "revisions": [
+          {
+            "label": "before",
+            "rev": "1a2b3c4^",
+            "sha": "0000000000000000000000000000000000000001"
+          },
+          {
+            "label": "after",
+            "rev": "1a2b3c4",
+            "sha": "0000000000000000000000000000000000000002"
+          }
+        ],
+        "steps": [
+          {
+            "name": "overlay",
+            "kind": "other",
+            "command": "git apply C:\\work\\report-mode.patch",
+            "inputs": [
+              "C:\\work\\report-mode.patch"
+            ]
+          },
+          {
+            "name": "build",
+            "kind": "build",
+            "command": "dotnet build tools\\Measure\\Measure.csproj -c Release"
+          },
+          {
+            "name": "measure",
+            "kind": "run",
+            "handsOff": true,
+            "timeoutMinutes": 30,
+            "command": "dotnet run --no-build --project tools\\Measure\\Measure.csproj -c Release -- --data {bind:data} --out {artifactDir}",
+            "artifacts": [
+              "{artifactDir}\\*.json",
+              "{artifactDir}\\*.txt"
+            ],
+            "expect": [
+              {
+                "in": "artifact:*.txt",
+                "mustMatch": "Build: .*\\+{sha7}",
+                "message": "the report is not from this commit"
+              }
+            ]
+          }
+        ],
+        "matrix": {
+          "rounds": 2,
+          "order": "interleaved",
+          "pauseBetweenSeconds": 60
+        },
+        "compare": [
+          {
+            "name": "the change",
+            "a": "before",
+            "b": "after"
+          }
+        ]
+      },
+      "baseline": "{\"bindings\":{\"data\":{\"description\":\"Folder of input data\",\"kind\":\"folder\"}},\"compare\":[{\"a\":\"before\",\"b\":\"after\",\"name\":\"the change\"}],\"format\":\"seatrials/1\",\"matrix\":{\"order\":\"interleaved\",\"pauseBetweenSeconds\":60,\"rounds\":2},\"name\":\"Report time, before and after a change\",\"purpose\":\"Does commit 1a2b3c4 change how long the report takes on alpha/topic?\",\"repo\":{\"remote\":\"https://example.com/acme/sample-repo.git\"},\"revisions\":[{\"label\":\"before\",\"rev\":\"1a2b3c4^\",\"sha\":\"0000000000000000000000000000000000000001\"},{\"label\":\"after\",\"rev\":\"1a2b3c4\",\"sha\":\"0000000000000000000000000000000000000002\"}],\"steps\":[{\"command\":\"git apply C:\\\\work\\\\report-mode.patch\",\"inputs\":[\"C:\\\\work\\\\report-mode.patch\"],\"kind\":\"other\",\"name\":\"overlay\"},{\"command\":\"dotnet build tools\\\\Measure\\\\Measure.csproj -c Release\",\"kind\":\"build\",\"name\":\"build\"},{\"artifacts\":[\"{artifactDir}\\\\*.json\",\"{artifactDir}\\\\*.txt\"],\"command\":\"dotnet run --no-build --project tools\\\\Measure\\\\Measure.csproj -c Release -- --data {bind:data} --out {artifactDir}\",\"expect\":[{\"in\":\"artifact:*.txt\",\"message\":\"the report is not from this commit\",\"mustMatch\":\"Build: .*\\\\+{sha7}\"}],\"handsOff\":true,\"kind\":\"run\",\"name\":\"measure\",\"timeoutMinutes\":30}]}",
+      "baselineSha256": "a660cbaf357575cf8c703da387872d5860d3135936f06b65ed9a73c05b38f9c4"
+    },
+    {
+      "name": "quotes, markup and non-ASCII",
+      "request": {
+        "format": "seatrials/1",
+        "name": "Quotes \"and\" back\\slash",
+        "repo": {
+          "remote": "https://example.com/acme/sample-repo.git"
+        },
+        "revisions": [
+          {
+            "label": "only",
+            "rev": "main"
+          }
+        ],
+        "steps": [
+          {
+            "name": "run",
+            "command": "echo \"a\\b\" & echo <done> \t| more"
+          }
+        ],
+        "purpose": "Does <this> & that change the time \u00b7 on caf\u00e9 \ud83d\ude00 \u2028?"
+      },
+      "baseline": "{\"format\":\"seatrials/1\",\"name\":\"Quotes \\\"and\\\" back\\\\slash\",\"purpose\":\"Does <this> & that change the time \u00b7 on caf\u00e9 \ud83d\ude00 \u2028?\",\"repo\":{\"remote\":\"https://example.com/acme/sample-repo.git\"},\"revisions\":[{\"label\":\"only\",\"rev\":\"main\"}],\"steps\":[{\"command\":\"echo \\\"a\\\\b\\\" & echo <done> \\t| more\",\"name\":\"run\"}]}",
+      "baselineSha256": "a6a2e0e1c5ca5d48cc09f2182b625bb53a88dc2a7e48173f1b618e21bdc4732b"
+    }
+  ],
+  "refused": [
+    {
+      "name": "fraction",
+      "json": "1.5"
+    },
+    {
+      "name": "exponent",
+      "json": "[1e2]"
+    },
+    {
+      "name": "a float that is a whole number",
+      "json": "{\"a\": 1.0}"
+    },
+    {
+      "name": "duplicate key",
+      "json": "{\"a\": 1, \"a\": 2}"
+    },
+    {
+      "name": "NaN",
+      "json": "NaN"
+    },
+    {
+      "name": "integer beyond 64 bits",
+      "json": "[9223372036854775808]"
+    }
+  ]
+}

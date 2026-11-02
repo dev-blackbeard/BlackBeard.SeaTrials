@@ -31,6 +31,9 @@ jobs:
       - name: Tests of the hook and the guard
         run: python3 scripts/test-hooks.py
 
+      - name: Tests of the stamper
+        run: python3 tools/test_stamp.py
+
       - name: Work out which commits to check
         id: range
         env:
@@ -80,6 +83,9 @@ jobs:
 
       - name: Self-test of the sanity check on Windows
         run: python scripts/sanity-check.py --selftest
+
+      - name: Tests of the stamper on Windows
+        run: python tools/test_stamp.py
 
       - name: Restore
         run: dotnet restore SeaTrials.sln
