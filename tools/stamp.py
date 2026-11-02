@@ -60,7 +60,7 @@ def _object_without_duplicates(pairs):
 
 def load_strict(text):
     """Parse JSON, refusing duplicate keys, floats, NaN and Infinity."""
-    if text.startswith("﻿"):
+    if text.startswith("\ufeff"):
         text = text[1:]
     try:
         return json.loads(

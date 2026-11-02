@@ -17,6 +17,6 @@ public sealed record Deviation(
 {
     public Deviation WithReason(string? reason) => this with { Reason = reason };
 
-    /// <summary>"path: was → now", the way the summary lists it. A missing side reads "(none)".</summary>
-    public string Describe() => Path + ": " + (Was ?? "(none)") + " → " + (Now ?? "(none)");
+    /// <summary>"path: was -&gt; now", the way the summary lists it. A missing side reads "(none)".</summary>
+    public string Describe() => Path + ": " + (Was ?? "(none)") + " \u2192 " + (Now ?? "(none)");
 }

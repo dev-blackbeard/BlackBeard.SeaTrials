@@ -16,7 +16,7 @@ public sealed class CanonicalJsonException : Exception
 /// The canonical form of a JSON value, the same bytes as tools/stamp.py gives: UTF-8; object keys sorted by Unicode
 /// code point; no whitespace; strings escaped only where JSON requires it (the quote, the backslash and the
 /// characters below U+0020, as \b \f \n \r \t or \u00xx in lower case), everything else, non-ASCII included, as it is;
-/// integers only. The framework's own JSON writer cannot be used: it escapes the quote as ".
+/// integers only. The framework's own JSON writer cannot be used: it escapes the quote with a numeric Unicode escape, which is not the canonical form.
 /// </summary>
 public static class CanonicalJson
 {
