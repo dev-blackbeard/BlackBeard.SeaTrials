@@ -24,11 +24,11 @@ public sealed record PlannedTask(
 
 /// <summary>
 /// Expands the revisions (or explicit tasks) and the matrix into the ordered plan. Interleaved runs A, B, A, B;
-/// blocked runs A, A, B, B. Every task is named "&lt;base name&gt; · round N", also when there is a single round.
+/// blocked runs A, A, B, B. Every task is named "&lt;base name&gt; (middle dot) round N", also when there is a single round.
 /// </summary>
 public static class PlanExpander
 {
-    public const string RoundSeparator = " · round ";
+    public const string RoundSeparator = " \u00B7 round ";
 
     public static IReadOnlyList<PlannedTask> Expand(RequestFile file)
     {
