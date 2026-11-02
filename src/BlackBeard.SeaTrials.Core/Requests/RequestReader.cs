@@ -19,7 +19,7 @@ public static class RequestReader
     public static ParseResult Parse(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
-        var content = text.TrimStart('﻿');
+        var content = text.TrimStart('\uFEFF');
         if (string.IsNullOrWhiteSpace(content))
         {
             return ParseResult.Failed("empty-file", "The file is empty.");
