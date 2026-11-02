@@ -1,0 +1,33 @@
+# Build output
+bin/
+obj/
+.vs/
+*.user
+*.suo
+TestResults/
+*.dll
+*.pdb
+*.exe
+*.msi
+*.nupkg
+
+# Results, logs and exports must never be committed
+runs/
+results/
+artifacts/
+run.json
+summary.txt
+baseline.json
+deviations.json
+plan-as-run.json
+*.log
+*.zip
+
+# Real request files stay out; only the synthetic samples are tracked
+*.seatrials.json
+!samples/*.seatrials.json
+
+# Local state
+__pycache__/
+*.pyc
+.claude/settings.local.json
