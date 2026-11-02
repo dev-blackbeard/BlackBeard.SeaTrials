@@ -1,0 +1,116 @@
+name: CI
+
+# The sanity-check job runs on every push and pull request: it is the backstop behind the
+# pre-push hook. The build jobs run for pull requests and for main, so a branch that has a
+# pull request is not built twice.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  sanity-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Self-test of the check
+        run: python3 scripts/sanity-check.py --selftest
+
+      - name: Tests of the hook and the guard
+        run: python3 scripts/test-hooks.py
+
+      - name: Work out which commits to check
+        id: range
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [ -n "$BASE_SHA" ]; then
+            range="$BASE_SHA..$HEAD_SHA"
+          elif [ -n "$(printf '%s' "$BEFORE_SHA" | tr -d 0)" ] && git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            range="$BEFORE_SHA..$HEAD_SHA"
+          else
+            range="origin/main..$HEAD_SHA"
+          fi
+          echo "range=$range" >> "$GITHUB_OUTPUT"
+
+      - name: Sanity check, all rules
+        if: github.event.pull_request.head.repo.fork != true
+        env:
+          SEATRIALS_DENYLIST: ${{ secrets.SEATRIALS_DENYLIST }}
+          RANGE: ${{ steps.range.outputs.range }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: python3 scripts/sanity-check.py --range "$RANGE" --branch "$BRANCH"
+
+      - name: Sanity check, rules P1 S1 M1 R1 only (a fork pull request gets no secrets)
+        if: github.event.pull_request.head.repo.fork == true
+        env:
+          RANGE: ${{ steps.range.outputs.range }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: python3 scripts/sanity-check.py --no-denylist --range "$RANGE" --branch "$BRANCH"
+
+  windows:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v4.3.1
+        with:
+          dotnet-version: 10.0.x
+
+      - name: SDK in use
+        run: dotnet --version
+
+      - name: Self-test of the sanity check on Windows
+        run: python scripts/sanity-check.py --selftest
+
+      - name: Restore
+        run: dotnet restore SeaTrials.sln
+
+      - name: Build everything
+        run: dotnet build SeaTrials.sln -c Release --no-restore
+
+      - name: Test everything
+        run: dotnet test SeaTrials.sln -c Release --no-build
+
+  linux:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v4.3.1
+        with:
+          dotnet-version: 10.0.x
+
+      - name: SDK in use
+        run: dotnet --version
+
+      - name: Restore Core and its tests
+        run: dotnet restore tests/BlackBeard.SeaTrials.Core.Tests/BlackBeard.SeaTrials.Core.Tests.csproj
+
+      - name: Build Core and its tests
+        run: dotnet build tests/BlackBeard.SeaTrials.Core.Tests/BlackBeard.SeaTrials.Core.Tests.csproj -c Release --no-restore
+
+      - name: Test Core
+        run: dotnet test tests/BlackBeard.SeaTrials.Core.Tests/BlackBeard.SeaTrials.Core.Tests.csproj -c Release --no-build
