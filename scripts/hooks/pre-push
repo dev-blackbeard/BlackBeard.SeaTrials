@@ -1,0 +1,20 @@
+#!/bin/sh
+# Refuses a push when the sanity check fails or cannot run.
+# Enabled with: git config core.hooksPath scripts/hooks   (scripts/install-hooks.sh does it)
+# Git passes the remote name and address as arguments and the refs on standard input.
+root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  echo "pre-push: not inside a git repository; push refused" >&2
+  exit 1
+}
+python=
+for candidate in python3 python "py -3"; do
+  if $candidate -c 'import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)' >/dev/null 2>&1; then
+    python=$candidate
+    break
+  fi
+done
+if [ -z "$python" ]; then
+  echo "pre-push: Python 3 was not found, so the sanity check cannot run; push refused" >&2
+  exit 1
+fi
+exec $python "$root/scripts/sanity-check.py" --pre-push "$@"
