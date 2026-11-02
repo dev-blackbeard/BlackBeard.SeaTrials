@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using BlackBeard.SeaTrials.Core.Provenance;
 using BlackBeard.SeaTrials.Core.Requests;
+using BlackBeard.SeaTrials.Core.Tests.Requests;
 
 namespace BlackBeard.SeaTrials.Core.Tests.Provenance;
 
