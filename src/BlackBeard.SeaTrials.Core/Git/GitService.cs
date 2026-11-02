@@ -12,7 +12,7 @@ namespace BlackBeard.SeaTrials.Core.Git;
 /// </summary>
 public sealed class GitService
 {
-    // Between the fields of a git format; git is told "%x1f" and prints this character.
+    // Between the fields of a git format; git is told "%x1f" (log) or "%1f" (for-each-ref) and prints this character.
     private const char Separator = (char)31;
 
     private static readonly Regex FullSha = new("^[0-9a-f]{40}$", RegexOptions.CultureInvariant);
@@ -79,7 +79,8 @@ public sealed class GitService
     /// <summary>Branches, remote-tracking branches and tags (a tag is followed to its commit), in that order, by name.</summary>
     public async Task<IReadOnlyList<RefEntry>> ListRefsAsync(string clone, CancellationToken cancellationToken = default)
     {
-        var format = "--format=%(refname)%x1f%(objecttype)%x1f%(objectname)%x1f%(*objecttype)%x1f%(*objectname)";
+        // for-each-ref spells a byte as %1f (hex, no x); the log formats below spell it %x1f.
+        var format = "--format=%(refname)%1f%(objecttype)%1f%(objectname)%1f%(*objecttype)%1f%(*objectname)";
         var output = await RunOkAsync(
             clone, GitScope.UserClone, cancellationToken, "for-each-ref", format, "refs/heads", "refs/remotes", "refs/tags").ConfigureAwait(false);
 
