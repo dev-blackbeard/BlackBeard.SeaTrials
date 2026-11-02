@@ -119,4 +119,7 @@ public sealed record RequestFile(
     public static ParseResult ParseBytes(byte[] utf8) => RequestReader.ParseBytes(utf8);
 
     public string ToJson() => RequestWriter.ToJson(this);
+
+    /// <summary>With <paramref name="includeGenerated"/> false the result is the plan: everything except the stamp.</summary>
+    public string ToJson(bool includeGenerated) => RequestWriter.ToJson(this, includeGenerated);
 }
