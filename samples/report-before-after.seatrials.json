@@ -1,0 +1,39 @@
+{
+  "format": "seatrials/1",
+  "name": "Report time, before and after a change",
+  "purpose": "Does commit 1a2b3c4 change how long the report takes on alpha/topic?",
+  "repo": { "remote": "https://example.com/acme/sample-repo.git" },
+  "bindings": {
+    "data": { "description": "Folder of input data", "kind": "folder" }
+  },
+  "revisions": [
+    { "label": "before", "rev": "1a2b3c4^", "sha": "0000000000000000000000000000000000000001" },
+    { "label": "after", "rev": "1a2b3c4", "sha": "0000000000000000000000000000000000000002" }
+  ],
+  "steps": [
+    {
+      "name": "overlay",
+      "kind": "other",
+      "command": "git apply C:\\work\\report-mode.patch",
+      "inputs": ["C:\\work\\report-mode.patch"]
+    },
+    {
+      "name": "build",
+      "kind": "build",
+      "command": "dotnet build tools\\Measure\\Measure.csproj -c Release"
+    },
+    {
+      "name": "measure",
+      "kind": "run",
+      "handsOff": true,
+      "timeoutMinutes": 30,
+      "command": "dotnet run --no-build --project tools\\Measure\\Measure.csproj -c Release -- --data {bind:data} --out {artifactDir}",
+      "artifacts": ["{artifactDir}\\*.json", "{artifactDir}\\*.txt"],
+      "expect": [
+        { "in": "artifact:*.txt", "mustMatch": "Build: .*\\+{sha7}", "message": "the report is not from this commit" }
+      ]
+    }
+  ],
+  "matrix": { "rounds": 2, "order": "interleaved", "pauseBetweenSeconds": 60 },
+  "compare": [{ "name": "the change", "a": "before", "b": "after" }]
+}

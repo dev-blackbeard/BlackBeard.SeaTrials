@@ -20,6 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\..\samples\*.seatrials.json" Link="samples\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\schemas\*.json" Link="schemas\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\BlackBeard.SeaTrials.Core\BlackBeard.SeaTrials.Core.csproj" />
   </ItemGroup>
 

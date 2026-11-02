@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "seatrials-1.schema.json",
+  "title": "SeaTrials request file (seatrials/1)",
+  "description": "A request: what to run, on which commits, with which checks, and why. UTF-8 JSON; comments and trailing commas are tolerated by the reader. In placeholders, {name} and {name:argument} are replaced; write {{ for a literal opening brace in front of a name.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "name", "repo", "revisions"],
+  "properties": {
+    "format": { "const": "seatrials/1" },
+    "name": { "type": "string", "minLength": 1, "description": "A short title." },
+    "purpose": { "type": "string", "description": "In words: the question this run answers." },
+    "repo": { "$ref": "#/$defs/repo" },
+    "bindings": {
+      "type": "object",
+      "description": "Values this PC must supply, used as {bind:name}.",
+      "propertyNames": { "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$" },
+      "additionalProperties": { "$ref": "#/$defs/binding" }
+    },
+    "revisions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/revision" } },
+    "steps": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/step" }, "description": "The steps every revision runs. Use either steps or tasks." },
+    "tasks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/task" }, "description": "Explicit tasks, instead of steps." },
+    "matrix": { "$ref": "#/$defs/matrix" },
+    "compare": { "type": "array", "items": { "$ref": "#/$defs/compare" } },
+    "generated": { "$ref": "#/$defs/generated" }
+  },
+  "allOf": [
+    {
+      "if": { "required": ["tasks"] },
+      "then": { "not": { "required": ["steps"] } },
+      "else": { "required": ["steps"] }
+    }
+  ],
+  "$defs": {
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["remote"],
+      "properties": {
+        "remote": { "type": "string", "pattern": "^[^\\s-]\\S*$", "description": "The git remote address, as git prints it for origin." }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string" },
+        "kind": { "enum": ["file", "folder", "text"], "default": "text" }
+      }
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label"],
+      "anyOf": [{ "required": ["rev"] }, { "required": ["sha"] }],
+      "properties": {
+        "label": { "$ref": "#/$defs/fileSafeName" },
+        "rev": { "type": "string", "minLength": 1, "pattern": "^[^-]", "description": "A branch, tag, id or expression such as <commit>^. Read by people." },
+        "sha": { "type": "string", "pattern": "^[0-9a-f]{40}$", "description": "The full commit id that runs. Authoritative." }
+      }
+    },
+    "fileSafeName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[^\\\\/:*?\"<>|\\u0000-\\u001f\\s.]([^\\\\/:*?\"<>|\\u0000-\\u001f]*[^\\\\/:*?\"<>|\\u0000-\\u001f\\s.])?$",
+      "description": "Used in file and folder names."
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "command"],
+      "properties": {
+        "name": { "$ref": "#/$defs/fileSafeName" },
+        "kind": { "enum": ["build", "test", "run", "other"], "default": "other" },
+        "command": { "type": "string", "minLength": 1, "description": "One line, run through the shell." },
+        "workdir": { "type": "string", "minLength": 1, "default": ".", "description": "Relative to the worktree root; no .. segments." },
+        "shell": { "enum": ["cmd", "pwsh"] },
+        "env": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["value"],
+                "properties": { "value": { "type": "string" }, "secret": { "type": "boolean" } }
+              }
+            ]
+          }
+        },
+        "timeoutMinutes": { "type": "integer", "minimum": 1, "maximum": 10080 },
+        "onFailure": { "enum": ["stop", "continue"], "default": "stop" },
+        "okExitCodes": { "type": "array", "minItems": 1, "items": { "type": "integer" }, "default": [0] },
+        "handsOff": { "type": "boolean", "default": false },
+        "expect": { "type": "array", "items": { "$ref": "#/$defs/check" } },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "string", "minLength": 1 },
+              { "$ref": "#/$defs/artifact" }
+            ]
+          }
+        },
+        "inputs": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["in"],
+      "oneOf": [{ "required": ["mustContain"] }, { "required": ["mustMatch"] }, { "required": ["mustNotMatch"] }],
+      "properties": {
+        "in": { "type": "string", "pattern": "^(output|artifact:.+)$" },
+        "mustContain": { "type": "string", "minLength": 1 },
+        "mustMatch": { "type": "string", "minLength": 1, "description": "A regular expression." },
+        "mustNotMatch": { "type": "string", "minLength": 1, "description": "A regular expression." },
+        "message": { "type": "string" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["glob"],
+      "properties": {
+        "glob": { "type": "string", "minLength": 1 },
+        "optional": { "type": "boolean" },
+        "includeOlder": { "type": "boolean" }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "revision", "steps"],
+      "properties": {
+        "name": { "$ref": "#/$defs/fileSafeName" },
+        "revision": { "type": "string", "description": "The label of a revision." },
+        "steps": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/step" } }
+      }
+    },
+    "matrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rounds": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 1 },
+        "order": { "enum": ["interleaved", "blocked"], "default": "interleaved" },
+        "pauseBetweenSeconds": { "type": "integer", "minimum": 0, "maximum": 86400, "default": 0 }
+      }
+    },
+    "compare": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "a", "b"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "a": { "type": "string", "description": "The label of a revision." },
+        "b": { "type": "string", "description": "The label of another revision." }
+      }
+    },
+    "generated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["by", "at", "tool", "baselineSha256", "baseline"],
+      "properties": {
+        "by": { "type": "string" },
+        "at": { "type": "string" },
+        "tool": { "type": "string" },
+        "baselineSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "baseline": { "type": "string" }
+      }
+    }
+  }
+}
